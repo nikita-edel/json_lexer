@@ -148,7 +148,7 @@ LEX_STIN JSON_LEX_ERR lexer_number(json_lexer_t* lex) {
         errno = 0;
         double dblVal = strtod(lex->token.start, NULL);
         if (errno == ERANGE) {
-            return JSON_LEX_ERR_NUM_OVERFLOW;
+            return JSON_LEX_ERR_NUM_RANGE;
         }
 
         lex->token.type = JSON_TOKEN_DOUBLE;
@@ -159,7 +159,7 @@ LEX_STIN JSON_LEX_ERR lexer_number(json_lexer_t* lex) {
         errno = 0;
         int64_t intVal = strtoll(lex->token.start , NULL, 10);
         if (errno == ERANGE) {
-            return JSON_LEX_ERR_NUM_OVERFLOW;
+            return JSON_LEX_ERR_NUM_RANGE;
         }
 
         lex->token.type = JSON_TOKEN_INT;
@@ -167,7 +167,7 @@ LEX_STIN JSON_LEX_ERR lexer_number(json_lexer_t* lex) {
         return JSON_LEX_OK;
     }
 
-    return JSON_LEX_ERR_NUM_OVERFLOW;
+    return JSON_LEX_ERR_NUM_RANGE;
 }
 
 LEX_STIN JSON_LEX_ERR lexer_string(json_lexer_t* lex) {
