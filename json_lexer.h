@@ -20,7 +20,8 @@
 	X(RBRACKET)         \
 	X(COMMA)            \
 	X(COLON)            \
-	X(INT)              \
+	X(INT64)            \
+	X(UINT64)           \
 	X(DOUBLE)           \
 	X(STRING)           \
 	X(TRUE)             \
@@ -68,6 +69,7 @@ extern const char* JSON__LEX_ERR_STRINGS[];
 typedef struct {
 	union {
 		int64_t intVal;
+		uint64_t uintVal;
 		double dblVal;
 	} number;
 

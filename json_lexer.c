@@ -38,7 +38,7 @@ LEX_STIN char lex_char(const json_lexer_t* lex);
 
 LEX_STIN JSON_LEX_ERR lexer_number(json_lexer_t* lex);
 
-LEX_STIN JSON_LEX_ERR lexer_int(json_lexer_t* lex);
+LEX_STIN JSON_LEX_ERR lexer_int(json_lexer_t* lex, bool* isSigned);
 
 LEX_STIN JSON_LEX_ERR lexer_digits(json_lexer_t* lex);
 
@@ -117,10 +117,10 @@ LEX_STIN JSON_LEX_ERR lexer_number(json_lexer_t* lex) {
 	JSON_LEX_ERR st = init_token(lex);
 	if (!st) return st;
 
-	bool hasFrac = false, hasExp = false;
+	bool hasFrac = false, hasExp = false, isSigned = false;
 
 	// validate json number format
-	st = lexer_int(lex);
+	st = lexer_int(lex, &isSigned);
 	if (st == JSON_LEX_OK) st = lexer_fraction(lex, &hasFrac);
 
 	if (st == JSON_LEX_OK) st = lexer_exponent(lex, &hasExp);
@@ -142,16 +142,28 @@ LEX_STIN JSON_LEX_ERR lexer_number(json_lexer_t* lex) {
 		lex->token.type = JSON_TOKEN_DOUBLE;
 		lex->token.number.dblVal = dblVal;
 		return JSON_LEX_OK;
+	}
 
-	} else {
+	if (isSigned) {
 		errno = 0;
 		int64_t intVal = strtoll(lex->token.start, NULL, 10);
 		if (errno == ERANGE) {
 			return JSON_LEX_ERR_NUM_RANGE;
 		}
 
-		lex->token.type = JSON_TOKEN_INT;
+		lex->token.type = JSON_TOKEN_INT64;
 		lex->token.number.intVal = intVal;
+		return JSON_LEX_OK;
+
+	} else {
+		errno = 0;
+		uint64_t uintVal = strtoull(lex->token.start, NULL, 10);
+		if (errno == ERANGE) {
+			return JSON_LEX_ERR_NUM_RANGE;
+		}
+
+		lex->token.type = JSON_TOKEN_UINT64;
+		lex->token.number.uintVal = uintVal;
 		return JSON_LEX_OK;
 	}
 
@@ -300,7 +312,7 @@ LEX_STIN JSON_LEX_ERR init_token(json_lexer_t* lex) {
 	return JSON_LEX_OK;
 }
 
-LEX_STIN JSON_LEX_ERR lexer_int(json_lexer_t* lex) {
+LEX_STIN JSON_LEX_ERR lexer_int(json_lexer_t* lex, bool* isSigned) {
 	char c = lex_char(lex);
 
 	if (c == '-') {
@@ -308,6 +320,7 @@ LEX_STIN JSON_LEX_ERR lexer_int(json_lexer_t* lex) {
 
 		c = lex_char(lex);
 		if (!is_digit(c)) return JSON_LEX_ERR_NUM_EXPECT_DIGIT;
+		*isSigned = true;
 	}
 
 	if (c == '0') {
